@@ -99,8 +99,8 @@ def distance_classification_test(loader, model, centroids, test_10crop=False, gp
                     all_output = torch.cat((all_output, outputs.data.float()), 0)
                     all_label = torch.cat((all_label, labels.data.float()), 0)
         else:
-            iter_test = iter(loader["test"])
-            for i in range(len(loader['test'])):
+            iter_test = iter(loader["source_test"])
+            for i in range(len(loader['source_test'])):
                 data = iter_test.next()
                 inputs = data[0]
                 labels = data[1]
@@ -180,7 +180,7 @@ def distance_classification_test(loader, model, centroids, test_10crop=False, gp
 
 
 
-def image_classification_test(loader, model, test_10crop=True, gpu=True):
+def image_classification_test(loader, model, test_10crop=False, gpu=True):
     start_test = True
     with torch.no_grad():
         if test_10crop:
@@ -208,6 +208,7 @@ def image_classification_test(loader, model, test_10crop=True, gpu=True):
         else:
             iter_test = iter(loader["source_test"])
             for i in range(len(loader['source_test'])):
+                #print(i)
                 data = iter_test.next()
                 inputs = data[0]
                 labels = data[1]
@@ -221,10 +222,17 @@ def image_classification_test(loader, model, test_10crop=True, gpu=True):
                     start_test = False
                 else:
                     all_output = torch.cat((all_output, outputs.data.float()), 0)
-                    all_label = torch.cat((all_label, labels.data.float()), 0)       
+                    all_label = torch.cat((all_label, labels.data.float()), 0)
+    
+    #print("out of for loop")   
+    #print(all_output.shape)
     _, predict = torch.max(all_output, 1)
+    #print(predict.shape)
+    #print(all_output.shape)
     accuracy = torch.sum(torch.squeeze(predict).float() == all_label).float() / float(all_label.size()[0])
-    return accuracy
+    conf_matrix = confusion_matrix(all_label.cpu().numpy(), predict.cpu().numpy())
+    print(accuracy)
+    return accuracy, conf_matrix
 
 
 def image_classification_predict(loader, model, test_10crop=True, gpu=True, softmax_param=1.0):
